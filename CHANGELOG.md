@@ -34,3 +34,7 @@ This release includes:
 ## 2.0.0-nullsafety
 
 * Migrating to Null Safety
+
+## 2.2.0
+
+* Support for alphanumeric CNPJ

@@ -38,3 +38,7 @@ This release includes:
 ## 2.2.0
 
 * Support for alphanumeric CNPJ
+
+## 2.2.1
+
+* Fix readme

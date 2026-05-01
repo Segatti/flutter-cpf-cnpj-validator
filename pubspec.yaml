@@ -1,7 +1,7 @@
 name: cpf_cnpj_validator_new
 description: A library to validate, format, strip, and generate alphanumeric CPF
   and CNPJ numbers from Brazil.
-version: 2.2.0
+version: 2.2.1
 homepage: https://github.com/Segatti/flutter-cpf-cnpj-validator
 
 environment:

@@ -1,6 +1,7 @@
 import 'dart:math';
 
 class CNPJValidator {
+  /// CNPJs inválidos por repetição (formato numérico legado).
   static const List<String> BLACKLIST = [
     "00000000000000",
     "11111111111111",
@@ -14,80 +15,115 @@ class CNPJValidator {
     "99999999999999"
   ];
 
-  static const STRIP_REGEX = r'[^\d]';
+  /// Remove pontuação; mantém letras e dígitos (padrão alfanumérico IN RFB 2.229/2024).
+  static const STRIP_REGEX = r'[^0-9A-Za-z]';
 
-  // Compute the Verifier Digit (or "Dígito Verificador (DV)" in PT-BR).
-  // You can learn more about the algorithm on [wikipedia (pt-br)](https://pt.wikipedia.org/wiki/D%C3%ADgito_verificador)
-  static int _verifierDigit(String cnpj) {
+  /// Valor numérico para o módulo 11: código ASCII do caractere menos 48
+  /// (0–9 inalterados; A=17 … Z=42). Letras minúsculas são tratadas como maiúsculas.
+  static int _asciiMinus48(String char) {
+    final c = char.toUpperCase();
+    final code = c.codeUnitAt(0);
+    if ((code >= 0x30 && code <= 0x39) || (code >= 0x41 && code <= 0x5A)) {
+      return code - 48;
+    }
+    throw FormatException('Caractere inválido no CNPJ: $char');
+  }
+
+  // Cálculo do dígito verificador (módulo 11), conforme IN RFB 2.229/2024
+  // (compatível com CNPJ exclusivamente numérico).
+  static int _verifierDigit(String cnpjBase) {
     int index = 2;
 
-    List<int> reverse =
-        cnpj.split("").map((s) => int.parse(s)).toList().reversed.toList();
+    final reverse = cnpjBase
+        .split('')
+        .map((s) => _asciiMinus48(s))
+        .toList()
+        .reversed
+        .toList();
 
-    int sum = 0;
+    var sum = 0;
 
-    reverse.forEach((number) {
-      sum += number * index;
+    for (final value in reverse) {
+      sum += value * index;
       index = (index == 9 ? 2 : index + 1);
-    });
+    }
 
-    int mod = sum % 11;
+    final mod = sum % 11;
 
     return (mod < 2 ? 0 : 11 - mod);
   }
 
   static String format(String cnpj) {
-    RegExp regExp = RegExp(r'^(\d{2})(\d{3})(\d{3})(\d{4})(\d{2})$');
+    final s = strip(cnpj);
+    final regExp = RegExp(r'^(.{2})(.{3})(.{3})(.{4})(.{2})$');
 
-    return strip(cnpj).replaceAllMapped(
-        regExp, (Match m) => "${m[1]}.${m[2]}.${m[3]}/${m[4]}-${m[5]}");
+    return s.replaceAllMapped(
+        regExp, (Match m) => '${m[1]}.${m[2]}.${m[3]}/${m[4]}-${m[5]}');
   }
 
   static String strip(String? cnpj) {
-    RegExp regex = RegExp(STRIP_REGEX);
-    cnpj = cnpj == null ? "" : cnpj;
+    final regex = RegExp(STRIP_REGEX);
+    final raw = cnpj == null ? '' : cnpj;
 
-    return cnpj.replaceAll(regex, "");
+    return raw.replaceAll(regex, '').toUpperCase();
   }
 
-  static bool isValid(String? cnpj, [stripBeforeValidation = true]) {
+  /// [stripBeforeValidation] `true` (padrão): remove pontuação e normaliza maiúsculas.
+  /// `false`: o valor deve ter exatamente 14 caracteres em [0-9A-Za-z] (sem remover nada).
+  static bool isValid(String? cnpj, [bool stripBeforeValidation = true]) {
     if (stripBeforeValidation) {
       cnpj = strip(cnpj);
+    } else {
+      if (cnpj == null || cnpj.isEmpty) {
+        return false;
+      }
+      if (cnpj.length != 14 ||
+          !RegExp(r'^[0-9A-Za-z]{14}$').hasMatch(cnpj)) {
+        return false;
+      }
+      cnpj = cnpj.toUpperCase();
     }
 
-    // cnpj must be defined
-    if (cnpj == null || cnpj.isEmpty) {
+    if (cnpj.isEmpty) {
       return false;
     }
 
-    // cnpj must have 14 chars
     if (cnpj.length != 14) {
       return false;
     }
 
-    // cnpj can't be blacklisted
-    if (BLACKLIST.indexOf(cnpj) != -1) {
+    if (!RegExp(r'^[0-9A-Z]{12}[0-9]{2}$').hasMatch(cnpj)) {
       return false;
     }
 
-    String numbers = cnpj.substring(0, 12);
-    numbers += _verifierDigit(numbers).toString();
-    numbers += _verifierDigit(numbers).toString();
+    if (BLACKLIST.contains(cnpj)) {
+      return false;
+    }
 
-    return numbers.substring(numbers.length - 2) ==
-        cnpj.substring(cnpj.length - 2);
+    try {
+      final base = cnpj.substring(0, 12);
+      var withDv = base + _verifierDigit(base).toString();
+      withDv += _verifierDigit(withDv).toString();
+
+      return withDv.substring(withDv.length - 2) ==
+          cnpj.substring(cnpj.length - 2);
+    } on FormatException {
+      return false;
+    }
   }
 
   static String generate([bool useFormat = false]) {
-    String numbers = "";
+    const chars = '0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZ';
+    final rnd = Random();
+    var body = '';
 
     for (var i = 0; i < 12; i += 1) {
-      numbers += Random().nextInt(9).toString();
+      body += chars[rnd.nextInt(chars.length)];
     }
 
-    numbers += _verifierDigit(numbers).toString();
-    numbers += _verifierDigit(numbers).toString();
+    body += _verifierDigit(body).toString();
+    body += _verifierDigit(body).toString();
 
-    return (useFormat ? format(numbers) : numbers);
+    return useFormat ? format(body) : body;
   }
 }

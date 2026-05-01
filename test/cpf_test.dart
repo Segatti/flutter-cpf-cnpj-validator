@@ -1,4 +1,4 @@
-import 'package:cpf_cnpj_validator/cpf_validator.dart';
+import 'package:cpf_cnpj_validator_new/cpf_validator.dart';
 import 'package:test/test.dart';
 
 void main() {

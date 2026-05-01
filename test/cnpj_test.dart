@@ -1,4 +1,4 @@
-import 'package:cpf_cnpj_validator/cnpj_validator.dart';
+import 'package:cpf_cnpj_validator_new/cnpj_validator.dart';
 import 'package:test/test.dart';
 
 void main() {
@@ -27,6 +27,18 @@ void main() {
     blackListed.forEach((cnpj) => expect(CNPJValidator.isValid(cnpj), false));
   });
 
+  test("CNPJ alfanumérico (IN RFB 2.229/2024)", () {
+    // Exemplos oficiais (Perguntas e Respostas — CNPJ alfanumérico, Receita Federal).
+    expect(CNPJValidator.isValid("AA345678000114"), true);
+    expect(CNPJValidator.isValid("AA345678000A29"), true);
+    expect(CNPJValidator.isValid("12.345.678/000A-08"), true);
+    expect(CNPJValidator.isValid("12ABC34501DE35"), true);
+    expect(CNPJValidator.isValid("aa345678000114"), true);
+
+    expect(CNPJValidator.isValid("AA345678000199"), false);
+    expect(CNPJValidator.isValid("AA345678000A2A", false), false);
+  });
+
   test("Test CNPJ generator", () {
     for (var i = 0; i < 10; i++) {
       String raw = CNPJValidator.generate();
@@ -40,9 +52,11 @@ void main() {
 
   test("Test CNPJ formatter", () {
     expect(CNPJValidator.format("85137090000110"), "85.137.090/0001-10");
+    expect(CNPJValidator.format("AA345678000114"), "AA.345.678/0001-14");
   });
 
   test("Test CNPJ strip", () {
     expect(CNPJValidator.strip("85.137.090/0001-10"), "85137090000110");
+    expect(CNPJValidator.strip("AA.345.678/0001-14"), "AA345678000114");
   });
 }

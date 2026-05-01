@@ -1,10 +1,11 @@
-name: cpf_cnpj_validator
-description: A lib to validate, format, strip and generate CPF and CNPJ numbers from Brazil.
-version: 2.1.0-nullsafety
-homepage: https://github.com/leonardocaldas/flutter-cpf-cnpj-validator
+name: cpf_cnpj_validator_new
+description: A library to validate, format, strip, and generate alphanumeric CPF
+  and CNPJ numbers from Brazil.
+version: 2.2.0
+homepage: https://github.com/Segatti/flutter-cpf-cnpj-validator
 
 environment:
-  sdk: ">=2.12.0 <3.0.0"
+  sdk: ">=2.12.0 <4.0.0"
 
 dev_dependencies:
   test: ^1.17.10
